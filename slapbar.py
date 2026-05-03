@@ -45,6 +45,7 @@ PACK_ICONS = {
     "retro":   "🕹",
     "custom":  "⭐",
     "latino":  "🌎",
+    "ronaldo": "⚽",
 }
 
 def pack_icon(name):
