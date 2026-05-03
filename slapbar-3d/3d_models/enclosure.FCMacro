@@ -1,0 +1,164 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║        SlapMac 3D — Caja (Enclosure)                        ║
+# ║        FreeCAD Macro — solo módulo Part                     ║
+# ╟──────────────────────────────────────────────────────────────╢
+# ║  CÓMO USAR EN FREECAD:                                       ║
+# ║  Macro → Macros... → selecciona este archivo → Ejecutar     ║
+# ║  Luego: File → Export → STEP / STL                          ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+import FreeCAD as App
+import Part
+
+# ─── PARÁMETROS (modifica aquí) ────────────────────────────────
+BOX_W    = 200.0   # Ancho mm
+BOX_H    = 110.0   # Alto mm
+BOX_D    = 40.0    # Profundidad mm
+WALL     = 3.0     # Grosor de paredes mm
+
+BTN_D    = 22.5    # Diámetro hueco botón mm
+BTN_COLS = 3       # Columnas de botones
+BTN_ROWS = 2       # Filas de botones
+BTN_X0   = 35.0    # X primer botón
+BTN_Y0   = 28.0    # Y primer botón
+BTN_SEP_X = 37.0   # Separación entre columnas
+BTN_SEP_Y = 37.0   # Separación entre filas
+
+USB_W    = 12.0    # Ancho ranura USB
+USB_H    = 7.0     # Alto ranura USB
+USB_Z    = 10.0    # Altura ranura USB desde la base
+
+SCREW_D  = 3.3     # Diámetro tornillo M3
+
+# ─── DOCUMENTO ────────────────────────────────────────────────
+doc = App.newDocument("SlapMac3D_Enclosure")
+V   = App.Vector
+
+# ─────────────────────────────────────────────────────────────
+#  PIEZA 1: CAJA BASE
+# ─────────────────────────────────────────────────────────────
+
+# Cuerpo exterior
+outer = Part.makeBox(BOX_W, BOX_H, BOX_D)
+
+# Vaciado interior (deja paredes y fondo)
+inner = Part.makeBox(
+    BOX_W - WALL*2,
+    BOX_H - WALL*2,
+    BOX_D - WALL,
+    V(WALL, WALL, WALL)
+)
+shell = outer.cut(inner)
+
+# Ranura USB en pared trasera (Y=0)
+usb = Part.makeBox(USB_W, WALL + 2, USB_H,
+                   V(BOX_W/2 - USB_W/2, -1, USB_Z))
+shell = shell.cut(usb)
+
+# Ranura cable lateral derecho
+cable = Part.makeBox(WALL + 2, 40, 6,
+                     V(BOX_W - WALL - 1, BOX_H/2 - 20, BOX_D/2 - 3))
+shell = shell.cut(cable)
+
+# Postes para tornillos M3 (4 esquinas interiores)
+post_positions = [
+    V(12, 12, WALL),
+    V(BOX_W - 20, 12, WALL),
+    V(12, BOX_H - 20, WALL),
+    V(BOX_W - 20, BOX_H - 20, WALL),
+]
+post_h = BOX_D - WALL - 2
+
+for pos in post_positions:
+    post = Part.makeCylinder(5, post_h, pos, V(0, 0, 1))
+    hole = Part.makeCylinder(SCREW_D/2, post_h, pos, V(0, 0, 1))
+    post = post.cut(hole)
+    shell = shell.fuse(post)
+
+# Plataforma para ESP32 (rail en el fondo interior)
+esp_rail = Part.makeBox(56, 30, 2, V(WALL*2, WALL*2, WALL))
+shell = shell.fuse(esp_rail)
+
+# Aplicar filetes a las aristas exteriores (radio 3mm)
+try:
+    edges = []
+    for i, edge in enumerate(shell.Edges):
+        if edge.Length > 5:
+            edges.append(i + 1)
+    shell = shell.makeFillet(3.0, shell.Edges[:4])
+except:
+    pass  # Si falla el filete, continúa sin él
+
+# Agregar al documento
+base_obj = doc.addObject("Part::Feature", "CajaBase")
+base_obj.Shape = shell
+base_obj.Label = "Caja Base"
+
+try:
+    base_obj.ViewObject.ShapeColor = (0.15, 0.25, 0.75, 0.0)
+except:
+    pass
+
+# ─────────────────────────────────────────────────────────────
+#  PIEZA 2: TAPA SUPERIOR
+# ─────────────────────────────────────────────────────────────
+
+lid = Part.makeBox(BOX_W, BOX_H, WALL)
+
+# Huecos para los 6 botones
+for row in range(BTN_ROWS):
+    for col in range(BTN_COLS):
+        bx = BTN_X0 + col * BTN_SEP_X
+        by = BTN_Y0 + row * BTN_SEP_Y
+        hole = Part.makeCylinder(BTN_D/2, WALL + 2, V(bx, by, -1), V(0, 0, 1))
+        lid  = lid.cut(hole)
+
+# Huecos tornillos M3 en la tapa
+for pos in post_positions:
+    screw = Part.makeCylinder(SCREW_D/2, WALL + 2, V(pos.x, pos.y, -1), V(0, 0, 1))
+    lid   = lid.cut(screw)
+
+# Rebaje de alineación (pequeño labio que encaja en la caja)
+lip_h   = 2.0
+lip_w   = 1.5
+lip_top = Part.makeBox(BOX_W - WALL*2 + lip_w*2,
+                        BOX_H - WALL*2 + lip_w*2,
+                        lip_h,
+                        V(WALL - lip_w, WALL - lip_w, -lip_h))
+lip_cut = Part.makeBox(BOX_W - WALL*2 - 0.4,
+                        BOX_H - WALL*2 - 0.4,
+                        lip_h + 1,
+                        V(WALL + 0.2, WALL + 0.2, -lip_h - 0.5))
+lip = lip_top.cut(lip_cut)
+lid = lid.fuse(lip)
+
+# Desplazar la tapa aparte (para ver ambas piezas)
+lid.translate(V(BOX_W + 15, 0, 0))
+
+lid_obj = doc.addObject("Part::Feature", "TapaSuperior")
+lid_obj.Shape = lid
+lid_obj.Label = "Tapa Superior"
+
+try:
+    lid_obj.ViewObject.ShapeColor = (0.25, 0.35, 0.85, 0.0)
+except:
+    pass
+
+# ─────────────────────────────────────────────────────────────
+#  FINALIZAR
+# ─────────────────────────────────────────────────────────────
+doc.recompute()
+
+try:
+    import FreeCADGui
+    FreeCADGui.activeDocument().activeView().viewIsometric()
+    FreeCADGui.SendMsgToActiveView("ViewFit")
+except:
+    pass
+
+App.Console.PrintMessage("\n")
+App.Console.PrintMessage("╔══════════════════════════════════════╗\n")
+App.Console.PrintMessage("║  SlapMac 3D — Caja generada ✓        ║\n")
+App.Console.PrintMessage(f"║  {BOX_W}×{BOX_H}×{BOX_D} mm | {BTN_COLS*BTN_ROWS} botones ø{BTN_D}mm\n")
+App.Console.PrintMessage("║  Exportar: File → Export → STEP/STL  ║\n")
+App.Console.PrintMessage("╚══════════════════════════════════════╝\n")

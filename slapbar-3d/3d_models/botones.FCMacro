@@ -1,0 +1,118 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║        SlapMac 3D — Tapas de Botones (6 piezas)             ║
+# ║        FreeCAD Macro — solo módulo Part                     ║
+# ╟──────────────────────────────────────────────────────────────╢
+# ║  CÓMO USAR EN FREECAD:                                       ║
+# ║  Macro → Macros... → selecciona este archivo → Ejecutar     ║
+# ║  Genera 6 capuchones para botones de 22mm                   ║
+# ║  Exportar cada pieza: selecciónala → File → Export → STL    ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+import FreeCAD as App
+import Part
+import math
+
+# ─── PARÁMETROS ────────────────────────────────────────────────
+CAP_OD   = 21.5    # Diámetro exterior capuchón mm
+CAP_ID   = 17.8    # Diámetro interior (encaja en vástago del botón 22mm)
+CAP_H    = 8.0     # Altura total mm
+CAP_TOP  = 2.5     # Grosor cara superior mm
+BEVEL    = 1.2     # Reducción radio en el bisel superior mm
+
+NOTCH_R  = 0.8     # Radio ranura circular identificadora (decorativa)
+SPACING  = 26.0    # Separación entre capuchones en la placa
+
+# ─── COLORES POR PACK ─────────────────────────────────────────
+COLORS = {
+    "DBZ":     (1.0,  0.55, 0.0,  0.0),   # Naranja dorado
+    "SLAP":    (1.0,  0.84, 0.0,  0.0),   # Amarillo
+    "CARTOON": (0.0,  0.78, 1.0,  0.0),   # Cian
+    "RETRO":   (0.59, 0.0,  1.0,  0.0),   # Violeta
+    "CUSTOM":  (0.0,  0.8,  0.2,  0.0),   # Verde
+    "RANDOM":  (0.88, 0.88, 0.88, 0.0),   # Blanco perla
+}
+
+# ─── DOCUMENTO ────────────────────────────────────────────────
+doc = App.newDocument("SlapMac3D_Botones")
+V   = App.Vector
+
+# ─── FUNCIÓN: Un capuchón ─────────────────────────────────────
+def make_cap(pack_name, index):
+    """
+    Genera un capuchón cilíndrico con:
+    - Bisel en la cara superior
+    - Hueco interior para encajar en el vástago del botón
+    - Ranuras en la cara superior para identificar el pack visualmente
+    """
+    ox = index * SPACING   # Posición X en la placa
+
+    # Cuerpo principal (cilindro exterior)
+    body = Part.makeCylinder(CAP_OD/2, CAP_H, V(ox, 0, 0), V(0, 0, 1))
+
+    # Bisel en la cara superior (cono que recorta el borde)
+    bevel_cone = Part.makeCone(
+        CAP_OD/2 + 0.1,        # radio base (ligeramente mayor)
+        CAP_OD/2 - BEVEL,      # radio superior (reducido)
+        BEVEL * 2,             # altura del cono
+        V(ox, 0, CAP_H - BEVEL * 2),
+        V(0, 0, 1)
+    )
+    # Recortamos el cono inverso para crear el bisel
+    bevel_cut = Part.makeCylinder(CAP_OD/2 + 1, BEVEL * 2 + 1,
+                                   V(ox, 0, CAP_H - BEVEL * 2 - 0.5), V(0, 0, 1))
+    bevel_shape = bevel_cut.cut(bevel_cone)
+    body = body.cut(bevel_shape)
+
+    # Hueco interior (para encajar en el vástago del botón)
+    inner_h = CAP_H - CAP_TOP + 0.1
+    inner = Part.makeCylinder(CAP_ID/2, inner_h, V(ox, 0, -0.05), V(0, 0, 1))
+    body  = body.cut(inner)
+
+    # Ranuras identificadoras en la cara superior (cantidad = índice+1)
+    # Permite distinguir el pack al tacto o vista
+    for n in range(index + 1):
+        angle = (2 * math.pi / max(index + 1, 1)) * n
+        rx = ox + (CAP_OD/2 * 0.45) * math.cos(angle)
+        ry = (CAP_OD/2 * 0.45) * math.sin(angle)
+        dimple = Part.makeSphere(NOTCH_R + 0.2, V(rx, ry, CAP_H - 0.3))
+        body   = body.cut(dimple)
+
+    return body
+
+
+# ─── GENERAR LOS 6 CAPUCHONES ─────────────────────────────────
+packs = ["DBZ", "SLAP", "CARTOON", "RETRO", "CUSTOM", "RANDOM"]
+
+for i, pack in enumerate(packs):
+    App.Console.PrintMessage(f"[SlapMac 3D] Generando botón {i+1}/6: {pack}...\n")
+    shape = make_cap(pack, i)
+
+    obj = doc.addObject("Part::Feature", f"Cap_{pack}")
+    obj.Shape = shape
+    obj.Label = f"Botón {pack}"
+
+    try:
+        c = COLORS[pack]
+        obj.ViewObject.ShapeColor = c
+    except:
+        pass
+
+doc.recompute()
+
+# Vista
+try:
+    import FreeCADGui
+    FreeCADGui.activeDocument().activeView().viewIsometric()
+    FreeCADGui.SendMsgToActiveView("ViewFit")
+except:
+    pass
+
+App.Console.PrintMessage("\n")
+App.Console.PrintMessage("╔══════════════════════════════════════════════╗\n")
+App.Console.PrintMessage("║  SlapMac 3D — 6 botones generados ✓          ║\n")
+App.Console.PrintMessage(f"║  OD={CAP_OD}mm · ID={CAP_ID}mm · H={CAP_H}mm\n")
+App.Console.PrintMessage("╟──────────────────────────────────────────────╢\n")
+App.Console.PrintMessage("║  Impresión: boca abajo · capa 0.15mm         ║\n")
+App.Console.PrintMessage("║  Pausa en 2mm → cambiar color para logo      ║\n")
+App.Console.PrintMessage("║  Exportar: selecciona pieza → File → Export  ║\n")
+App.Console.PrintMessage("╚══════════════════════════════════════════════╝\n")
