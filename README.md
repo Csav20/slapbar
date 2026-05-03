@@ -2,7 +2,7 @@
 
 **SlapBar** es una app de barra de menú para macOS que reproduce sonidos al presionar **Enter** o **Space** en cualquier aplicación — incluyendo VSCode.
 
-Soporta múltiples packs: 👋 SlapMac · 🐉 DBZ · 🌎 Latino · 🎪 Cartoon · 🕹 Retro · ⭐ Custom
+Soporta múltiples packs: 👋 SlapMac · 🐉 DBZ · 🌎 Latino · ⚽ Ronaldo · 🎪 Cartoon · 🕹 Retro · ⭐ Custom
 
 > 🎮 ¿Quieres una botonera física? Mira [`slapbar-3d/`](./slapbar-3d/) y [`slapbar-esp32/`](./slapbar-esp32/)
 
@@ -22,6 +22,7 @@ Si te gusta SlapBar y quieres que siga creciendo, puedes invitarme un café:
 - 🎵 Múltiples **packs de sonidos** seleccionables desde la barra de menú
 - 🐉 Pack **Dragon Ball Z** — 27 sonidos (Kamehameha, Vegeta, Goku, Cha-La...)
 - 🌎 Pack **Latino** — 25 frases y sonidos típicos chilenos y latinos
+- ⚽ Pack **Ronaldo** — 20 sonidos de CR7 (SIUU, gritos, celebraciones...)
 - 🔈 Control de **volumen** (30% a 200%)
 - ⌨️ Toggle individual para **Enter** y **Space**
 - 🔇 Toggle ON/OFF desde la barra de menú
@@ -66,6 +67,11 @@ bash download_dbz_sounds.sh
 bash download_latino_sounds.sh
 ```
 
+**Pack Ronaldo ⚽**
+```bash
+bash download_ronaldo_sounds.sh
+```
+
 ---
 
 ## Estructura del repositorio
@@ -81,6 +87,7 @@ slapbar/
 │   ├── slap/                   ← Tus MP3s de SlapMac
 │   ├── dbz/                    ← Dragon Ball Z
 │   ├── latino/                 ← Frases chilenas y latinas
+│   ├── ronaldo/                ← Sonidos de CR7 ⚽
 │   ├── cartoon/
 │   ├── retro/
 │   └── custom/
@@ -100,6 +107,35 @@ slapbar/
 └── .github/
     └── ISSUE_TEMPLATE/
 ```
+
+---
+
+## Pack Ronaldo ⚽
+
+20 sonidos icónicos de Cristiano Ronaldo:
+
+| Sonido | Descripción |
+|--------|-------------|
+| `cr7-siuu` | El SIUU original de CR7 |
+| `ronaldo-siuuuu` | RONALDO SIUUUU |
+| `ronaldo-siuu` | Siuu versión corta |
+| `ronaldo-suiiiii` | Ronaldo Suiiiii |
+| `ronaldo-suiii-largo` | RONALDO SUIIIIIIIIIIIII |
+| `suuuuuu` | Suuuuuuuuuuuuu |
+| `siiii-ronaldo` | Siiii Ronaldo |
+| `grito-siii` | Grito Ronaldo Siii 2.0 |
+| `siuu-quality` | Siuu in good quality |
+| `urlo-sium` | Urlo del Sium CR7 |
+| `ishowspeed-sui` | IShowSpeed ronaldo sui |
+| `buenas-noches` | Cristiano Ronaldo "buenas noches" |
+| `forza-juve` | Cristiano Ronaldo Forza Juve |
+| `ballon-dor-grito` | Grito Ballon d'Or 2014 |
+| `ronaldo` | Ronaldo clásico |
+| `ti-aspecto` | Ronaldo - Ti aspecto |
+| `bom-dia-cr7` | Bom dia do CR7 |
+| `champions-league` | Champions League |
+| `ronaldinho-64` | Mundial Ronaldinho Soccer 64 |
+| `siuuuuuu` | Siuuuuuuuu |
 
 ---
 
