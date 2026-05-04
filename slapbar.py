@@ -98,17 +98,7 @@ def play():
             print(f"[SlapBar] {e}")
     threading.Thread(target=_go, daemon=True).start()
 
-# ── Listener global de teclado ────────────────────────────────────
-def on_press(key):
-    try:
-        if key in (keyboard.Key.enter, keyboard.Key.space):
-            play()
-    except Exception:
-        pass
-
-lst = keyboard.Listener(on_press=on_press)
-lst.daemon = True
-lst.start()
+# ── Listener global de teclado (se inicia después de crear la app) ─
 
 # ── App barra de menú ─────────────────────────────────────────────
 class SlapBar(rumps.App):
@@ -252,7 +242,7 @@ class SlapBar(rumps.App):
         self.btn_info.title = self._info()
 
 
-# ── Sobreescribir on_press para respetar trigger settings ─────────
+# ── Callback único del listener ───────────────────────────────────
 _app_ref = None
 
 def on_press_smart(key):
@@ -264,8 +254,6 @@ def on_press_smart(key):
             play()
     except Exception:
         pass
-
-lst.stop()  # detener el listener genérico
 
 
 if __name__ == "__main__":
